@@ -76,13 +76,12 @@ public abstract class PipeBlock<PipeType extends Enum<PipeType> & IPipeType<Node
     public PipeBlock(Properties properties, PipeType pipeType) {
         super(properties);
         this.pipeType = pipeType;
-        registerDefaultState(defaultBlockState().setValue(BlockProperties.SERVER_TICK, false)
-                .setValue(BlockStateProperties.WATERLOGGED, false));
+        registerDefaultState(defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder.add(BlockProperties.SERVER_TICK, BlockStateProperties.WATERLOGGED));
+        super.createBlockStateDefinition(builder.add(BlockStateProperties.WATERLOGGED));
     }
 
     @Override
@@ -317,8 +316,7 @@ public abstract class PipeBlock<PipeType extends Enum<PipeType> & IPipeType<Node
                 level.playSound(player, pos,
                         type.getPlaceSound(), SoundSource.BLOCKS,
                         (type.getVolume() + 1.0F) / 2.0F, type.getPitch() * 0.8F);
-                player.swing(hand);
-                return ItemInteractionResult.SUCCESS;
+                return ItemInteractionResult.sidedSuccess(player.level().isClientSide);
             }
         }
 
@@ -431,7 +429,7 @@ public abstract class PipeBlock<PipeType extends Enum<PipeType> & IPipeType<Node
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> blockEntityType) {
         if (blockEntityType == getBlockEntityType()) {
-            if (!level.isClientSide && state.getValue(BlockProperties.SERVER_TICK)) {
+            if (!level.isClientSide) {
                 return (pLevel, pPos, pState, pTile) -> {
                     if (pTile instanceof IPipeNode<?, ?> pipeNode) {
                         pipeNode.serverTick();

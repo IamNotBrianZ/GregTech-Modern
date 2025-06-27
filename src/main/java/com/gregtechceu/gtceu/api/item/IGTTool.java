@@ -28,16 +28,13 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
-import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 
 import net.minecraft.client.color.item.ItemColor;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.*;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.component.*;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,6 +46,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -72,7 +70,7 @@ import java.util.stream.Collectors;
 
 import static com.gregtechceu.gtceu.api.item.tool.ToolHelper.*;
 
-public interface IGTTool extends IUIHolder.Item, ItemLike {
+public interface IGTTool extends HeldItemUIFactory.IHeldItemUIHolder, ItemLike {
 
     GTToolType getToolType();
 
@@ -98,8 +96,21 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
 
     default ItemStack getRaw() {
         ItemStack stack = new ItemStack(asItem());
-        getBehaviorsComponent(stack);
+        stack.set(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
+        stack.set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        stack.remove(DataComponents.MAX_DAMAGE);
+        stack.remove(DataComponents.DAMAGE);
+        stack.remove(DataComponents.UNBREAKABLE);
+        stack.remove(GTDataComponents.GT_TOOL);
+        stack.remove(GTDataComponents.AOE);
+        stack.remove(GTDataComponents.RELOCATE_MINED_BLOCKS);
+        stack.remove(GTDataComponents.RELOCATE_MOB_DROPS);
+        stack.remove(GTDataComponents.INNATE_ENCHANTMENTS);
         return stack;
+    }
+
+    private <T> void seTypedComponent(TypedDataComponent<T> component, PatchedDataComponentMap map) {
+        component.applyTo(map);
     }
 
     default ItemStack get() {
@@ -348,12 +359,10 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
                                                            HolderLookup.RegistryLookup<Enchantment> lookup) {
         var existing = stack.get(GTDataComponents.INNATE_ENCHANTMENTS);
         if (existing != null) {
-            return existing;
+            return IGTTool.joinEnchants(stack, existing);
         }
 
-        ItemEnchantments original = stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
-        var enchantments = new ItemEnchantments.Mutable(original);
-
+        var enchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
         ToolProperty toolProperty = this.getMaterial().getProperty(PropertyKey.TOOL);
 
         // Set tool and material enchantments
@@ -361,11 +370,27 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
         innateEnchantments.putAll(getToolStats().getDefaultEnchantments());
         innateEnchantments.putAll(toolProperty.getEnchantments());
 
+        if (innateEnchantments.isEmpty()) {
+            return stack.getTagEnchantments();
+        }
         innateEnchantments.forEach((enchantKey, level) -> {
             lookup.get(enchantKey).ifPresent(enchant -> enchantments.upgrade(enchant, level));
         });
-        // noinspection DataFlowIssue
-        return stack.set(GTDataComponents.INNATE_ENCHANTMENTS, enchantments.toImmutable());
+        existing = enchantments.toImmutable();
+        stack.set(GTDataComponents.INNATE_ENCHANTMENTS, existing);
+        return IGTTool.joinEnchants(stack, existing);
+    }
+
+    private static ItemEnchantments joinEnchants(ItemStack stack, @NotNull ItemEnchantments enchants) {
+        if (enchants.isEmpty()) {
+            return ItemEnchantments.EMPTY;
+        }
+        var original = stack.getTagEnchantments();
+        var joined = new ItemEnchantments.Mutable(original);
+        for (var entry : enchants.entrySet()) {
+            joined.upgrade(entry.getKey(), entry.getIntValue());
+        }
+        return joined.toImmutable();
     }
 
     default int definition$getEnchantmentLevel(ItemStack stack, Holder<Enchantment> enchantment) {
@@ -537,10 +562,7 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
         }
     }
 
-    // Client-side methods
-
-    @OnlyIn(Dist.CLIENT)
-    default void definition$appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context,
+    default void definition$appendHoverText(@NotNull ItemStack stack, @NotNull Item.TooltipContext context,
                                             @NotNull List<Component> tooltip, TooltipFlag flag) {
         if (!(stack.getItem() instanceof IGTTool tool)) return;
 
@@ -582,7 +604,7 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
 
             int harvestLevel = tool.getTotalHarvestLevel();
             String harvestName = "item.gtceu.tool.harvest_level." + harvestLevel;
-            if (I18n.exists(harvestName)) { // if there's a defined name for the harvest level, use it
+            if (Language.getInstance().has(harvestName)) { // if there's a defined name for the harvest level, use it
                 tooltip.add(Component.translatable("item.gtceu.tool.tooltip.harvest_level_extra", harvestLevel,
                         Component.translatable(harvestName)));
             } else {
@@ -595,7 +617,7 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
         AoESymmetrical aoeDefinition = getAoEDefinition(stack);
 
         if (!aoeDefinition.isNone()) {
-            addedBehaviorNewLine = tooltip.add(Component.literal(""));
+            addedBehaviorNewLine = tooltip.add(CommonComponents.EMPTY);
             tooltip.add(Component.translatable("item.gtceu.tool.behavior.aoe_mining",
                     aoeDefinition.column() * 2 + 1, aoeDefinition.row() * 2 + 1, aoeDefinition.layer() + 1));
         }
@@ -603,29 +625,29 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
         if (stack.has(GTDataComponents.RELOCATE_MINED_BLOCKS)) {
             if (!addedBehaviorNewLine) {
                 addedBehaviorNewLine = true;
-                tooltip.add(Component.literal(""));
+                tooltip.add(CommonComponents.EMPTY);
             }
             tooltip.add(Component.translatable("item.gtceu.tool.behavior.relocate_mining"));
         }
 
         if (!addedBehaviorNewLine && !toolStats.getBehaviors().isEmpty()) {
-            tooltip.add(Component.literal(""));
+            tooltip.add(CommonComponents.EMPTY);
         }
         toolStats.getBehaviors().forEach(behavior -> behavior.addInformation(stack, context, tooltip, flag));
 
         // unique tooltip
-        String uniqueTooltip = "item.gtceu.tool." + BuiltInRegistries.ITEM.getKey(this.asItem()).getPath() + ".tooltip";
-        if (I18n.exists(uniqueTooltip)) {
-            tooltip.add(Component.literal(""));
+        String uniqueTooltip = this.getToolType().getUnlocalizedName() + ".tooltip";
+        if (Language.getInstance().has(uniqueTooltip)) {
+            tooltip.add(CommonComponents.EMPTY);
             tooltip.add(Component.translatable(uniqueTooltip));
         }
 
-        tooltip.add(Component.literal(""));
+        tooltip.add(CommonComponents.EMPTY);
 
         // valid tools
         tooltip.add(Component.translatable("item.gtceu.tool.usable_as",
                 getToolClassNames(stack).stream()
-                        .filter(s -> I18n.exists("gtceu.tool.class." + s))
+                        .filter(s -> Language.getInstance().has("gtceu.tool.class." + s))
                         .map(s -> Component.translatable("gtceu.tool.class." + s))
                         .collect(Component::empty, FormattingUtil::combineComponents,
                                 FormattingUtil::combineComponents)));
@@ -666,7 +688,7 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
     }
 
     // Sound Playing
-    default void playCraftingSound(Player player, ItemStack stack) {
+    default void playCraftingSound(@Nullable Player player, ItemStack stack) {
         // player null check for things like auto-crafters
         if (ConfigHolder.INSTANCE.client.toolCraftingSounds && getSound() != null && player != null) {
             if (canPlaySound(stack)) {
@@ -682,16 +704,13 @@ public interface IGTTool extends IUIHolder.Item, ItemLike {
     }
 
     default boolean canPlaySound(ItemStack stack) {
-        return Math.abs(
-                (int) System.currentTimeMillis() - stack.getOrDefault(GTDataComponents.GT_TOOL, GTTool.EMPTY)
-                        .lastCraftingUse().orElse(0)) >
-                1000;
+        int lastUse = stack.getOrDefault(GTDataComponents.GT_TOOL, GTTool.EMPTY).lastCraftingUse();
+        return Math.abs((int) System.currentTimeMillis() - lastUse) > 1000;
     }
 
     default void playSound(Player player) {
         if (ConfigHolder.INSTANCE.client.toolUseSounds && getSound() != null) {
-            player.level().playSound(null, player.position().x, player.position().y, player.position().z,
-                    getSound().getMainEvent(), SoundSource.PLAYERS, 1F, 1F);
+            player.level().playSound(null, player, getSound().getMainEvent(), SoundSource.PLAYERS, 1F, 1F);
         }
     }
 

@@ -35,6 +35,7 @@ import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
@@ -204,19 +205,14 @@ public interface GTRecipeSchema {
             return input(FluidRecipeCapability.CAP, (Object[]) inputs);
         }
 
-        public GTKubeRecipe itemOutputsRanged(SizedIngredient ingredient, int min, int max) {
-            return output(ItemRecipeCapability.CAP, new SizedIngredient(
-                    new IntProviderIngredient(ingredient.ingredient(), UniformInt.of(min, max)).toVanilla(), 1));
-        }
-
         public GTKubeRecipe outputItemsRanged(Ingredient ingredient, int min, int max) {
             return output(ItemRecipeCapability.CAP,
-                    new SizedIngredient(new IntProviderIngredient(ingredient, UniformInt.of(min, max)).toVanilla(), 1));
+                    new SizedIngredient(IntProviderIngredient.of(ingredient, UniformInt.of(min, max)), 1));
         }
 
+        @HideFromJS
         public GTKubeRecipe outputItemsRanged(ItemStack stack, int min, int max) {
-            return output(ItemRecipeCapability.CAP,
-                    new IntProviderIngredient(Ingredient.of(stack), UniformInt.of(min, max)));
+            return outputItemsRanged(RecipeUtil.makeItemIngredient(stack), min, max);
         }
 
         public GTKubeRecipe outputItemsRanged(TagPrefix orePrefix, Material material, int min, int max) {
@@ -613,11 +609,11 @@ public interface GTRecipeSchema {
             return dimension(dimension, false);
         }
 
-        public GTKubeRecipe biome(ResourceLocation biome, boolean reverse) {
+        public GTKubeRecipe biome(ResourceKey<Biome> biome, boolean reverse) {
             return addCondition(new BiomeCondition(biome).setReverse(reverse));
         }
 
-        public GTKubeRecipe biome(ResourceLocation biome) {
+        public GTKubeRecipe biome(ResourceKey<Biome> biome) {
             return biome(biome, false);
         }
 

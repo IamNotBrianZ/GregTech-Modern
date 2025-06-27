@@ -18,6 +18,24 @@ public class CustomTags {
     public static final TagKey<Item> PISTONS = TagUtil.createItemTag("pistons");
     public static final TagKey<Item> DOUGHS = TagUtil.createItemTag("doughs");
 
+    // Why did I put them all here? Why not? Science isn't about why, it's about why NOT!
+    // Why is so much of our science dangerous? Why don't you marry safe science if you love it so much!?
+    // IN FACT, WHY NOT INVENT A SAFETY DOOR THAT WON'T HIT YOU ON THE BUTT ON THE WAY OUT BECAUSE YOU'RE FIRED!!!
+    // Not you test subject, you're doing fine.
+    // YES, YOU. BOX. YOUR STUFF. OUT THE FRONT DOOR. PARKING LOT. CAR. GOODBYE!
+    public static final TagKey<Item> ALIVE_CORAL_BLOCK_ITEMS = TagUtil.createItemTag("coral_blocks/alive");
+    public static final TagKey<Item> DEAD_CORAL_BLOCK_ITEMS = TagUtil.createItemTag("coral_blocks/dead");
+    public static final TagKey<Item> CORAL_BLOCK_ITEMS = TagUtil.createItemTag("coral_blocks");
+    public static final TagKey<Item> ALIVE_CORAL_PLANT_ITEMS = TagUtil.createItemTag("coral_plants/alive");
+    public static final TagKey<Item> DEAD_CORAL_PLANT_ITEMS = TagUtil.createItemTag("coral_plants/dead");
+    public static final TagKey<Item> CORAL_PLANT_ITEMS = TagUtil.createItemTag("coral_plants");
+    public static final TagKey<Item> ALIVE_CORAL_FAN_ITEMS = TagUtil.createItemTag("coral_fans/alive");
+    public static final TagKey<Item> DEAD_CORAL_FAN_ITEMS = TagUtil.createItemTag("coral_fans/dead");
+    public static final TagKey<Item> CORAL_FAN_ITEMS = TagUtil.createItemTag("coral_fans");
+    public static final TagKey<Item> ALIVE_CORAL_ITEMS = TagUtil.createItemTag("corals/alive");
+    public static final TagKey<Item> DEAD_CORAL_ITEMS = TagUtil.createItemTag("corals/dead");
+    public static final TagKey<Item> CORAL_ITEMS = TagUtil.createItemTag("corals");
+
     // Added Gregtech tags
     public static final TagKey<Item> TRANSISTORS = TagUtil.createModItemTag("transistors");
     public static final TagKey<Item> RESISTORS = TagUtil.createModItemTag("resistors");
@@ -100,10 +118,8 @@ public class CustomTags {
     public static final TagKey<Item> PPE_ARMOR = TagUtil.createModItemTag("ppe_armor");
     public static final TagKey<Item> STEP_BOOTS = TagUtil.createModItemTag("step_boots");
     public static final TagKey<Item> RUBBER_LOGS = TagUtil.createModItemTag("rubber_logs");
-    public static final TagKey<Item> CORAL_BLOCK_ITEMS = TagUtil.createItemTag("coral_blocks");
-    public static final TagKey<Item> CORAL_ITEMS = TagUtil.createItemTag("corals");
 
-    public static final TagKey<Item> BRICKS_FIREBRICK = TagUtil.createItemTag("bricks/firebrick");
+    public static final TagKey<Item> CHEM_BATH_WASHABLE = TagUtil.createModItemTag("chemical_bath_washable");
 
     // Mineability tags
     public static final TagKey<Block> MINEABLE_WITH_WRENCH = TagUtil.createBlockTag("mineable/wrench");
@@ -182,6 +198,8 @@ public class CustomTags {
 
     public static final TagKey<Block> ENDSTONE_ORE_REPLACEABLES = TagUtil.createBlockTag("end_stone_ore_replaceables");
     public static final TagKey<Block> CLEANROOM_FLOORS = TagUtil.createModBlockTag("cleanroom_floors");
+    public static final TagKey<Block> CHARCOAL_PILE_IGNITER_WALLS = TagUtil.createModBlockTag(
+            "charcoal_pile_igniter_walls");
 
     public static final TagKey<Biome> HAS_RUBBER_TREE = TagUtil.createModTag(Registries.BIOME, "has_rubber_tree");
 
@@ -192,9 +210,10 @@ public class CustomTags {
             false);
     public static final TagKey<EntityType<?>> SPIDERS = TagUtil.createTag(Registries.ENTITY_TYPE, "spiders", false);
 
-    public static final TagKey<Fluid> LIGHTER_FLUIDS = TagUtil.createFluidTag("lighter_fluids");
-    public static final TagKey<Fluid> MOLTEN_FLUIDS = TagUtil.createFluidTag("molten");
+    public static final TagKey<Fluid> LIGHTER_FLUIDS = TagUtil.createModFluidTag("lighter_fluids");
     public static final TagKey<Fluid> POTION_FLUIDS = TagUtil.createFluidTag("potion");
+
+    public static final TagKey<Fluid> MOLTEN_FLUIDS = TagUtil.createFluidTag("molten");
     public static final TagKey<Fluid> LIQUID_FLUIDS = TagUtil.createFluidTag("liquid");
     public static final TagKey<Fluid> PLASMA_FLUIDS = TagUtil.createFluidTag("plasmatic");
 }

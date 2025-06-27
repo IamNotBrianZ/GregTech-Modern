@@ -84,7 +84,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                                     new CastedFloat(intProviderIngredient.getCountProvider()),
                                     ConstantFloat.of((float) modifier.multiplier())),
                             ConstantFloat.of((float) modifier.addition())));
-            var newIngredient = IntProviderIngredient.create(intProviderIngredient.getInner(), newIntProvider);
+            var newIngredient = IntProviderIngredient.of(intProviderIngredient.getInner(), newIntProvider);
             return new SizedIngredient(newIngredient, 1);
         }
         return content.copyWithCount(modifier.apply(content.count()));
@@ -205,16 +205,16 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                     }
                 }
                 if (isEqual) continue;
-                // formatter:off
-                if (ingredient.ingredient().getCustomIngredient() instanceof IntCircuitIngredient) {
+                // spotless:off
+                if (ingredient.getContainedCustom() instanceof IntCircuitIngredient) {
                     list.addFirst(ingredient);
-                } else if (ingredient.ingredient().getCustomIngredient() instanceof IntProviderIngredient intProvider &&
+                } else if (ingredient.getContainedCustom() instanceof IntProviderIngredient intProvider &&
                         intProvider.getInner().getCustomIngredient() instanceof IntCircuitIngredient) {
-                            list.addFirst(ingredient);
-                        } else {
-                            list.add(ingredient);
-                        }
-                // formatter:on
+                    list.addFirst(ingredient);
+                } else {
+                    list.add(ingredient);
+                }
+                // spotless:on
             } else if (item instanceof ItemStack stack) {
                 boolean isEqual = false;
                 for (Object obj : list) {
